@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CINESCOPE</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<header>
+  <div class="logo">CINE<span>SCOPE</span></div>
+  <nav>
+    <button class="nav-btn active" onclick="showTab('buscar')">Buscar</button>
+    <button class="nav-btn" onclick="showTab('sorteio')">🎲 Sortear</button>
+    <button class="nav-btn" onclick="showTab('favoritos')">Favoritos <span id="fav-count"></span></button>
+    <button class="nav-btn" onclick="showTab('avaliados')">Avaliados</button>
+  </nav>
+  <div class="auth-area" id="auth-area"></div>
+</header>
+
+<!-- HERO / SEARCH -->
+<section class="hero" id="tab-buscar">
+  <div class="hero-label">● Descoberta cinematográfica</div>
+  <h1>Encontre seu próximo<br><em>favorito</em></h1>
+  <p>Filmes e séries com notas, sinopse e avaliação pessoal.</p>
+
+  <div class="search-wrap">
+    <input type="text" id="search-input" placeholder="Buscar filmes, séries, diretores..." autocomplete="off">
+    <button class="search-btn" onclick="doSearch()">BUSCAR</button>
+  </div>
+
+  <div class="filters">
+    <button class="filter-btn active" data-type="multi" onclick="setFilter(this,'multi')">Tudo</button>
+    <button class="filter-btn" data-type="movie" onclick="setFilter(this,'movie')">Filmes</button>
+    <button class="filter-btn" data-type="tv" onclick="setFilter(this,'tv')">Séries</button>
+  </div>
+</section>
+
+<main>
+  <!-- SEARCH RESULTS -->
+  <div id="results-section" style="display:none">
+    <div class="section-label" id="results-label">Resultados</div>
+    <div id="results-grid" class="movies-grid"></div>
+  </div>
+
+  <!-- TRENDING (when no search) -->
+  <div id="trending-section">
+    <div class="section-label">Em Alta Hoje</div>
+    <div id="trending-grid" class="movies-grid"></div>
+  </div>
+
+  <!-- SORTEIO TAB -->
+  <div id="tab-sorteio" style="display:none">
+    <div id="sorteio-ui"></div>
+  </div>
+
+  <!-- FAVORITOS TAB -->
+  <div id="tab-favoritos" style="display:none">
+    <div class="section-label">Meus Favoritos</div>
+    <div id="favs-grid" class="movies-grid"></div>
+  </div>
+
+  <!-- AVALIADOS TAB -->
+  <div id="tab-avaliados" style="display:none">
+    <div class="section-label">Minhas Avaliações</div>
+    <div id="rated-grid" class="movies-grid"></div>
+  </div>
+</main>
+
+<!-- MODAL DE DETALHES -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal" id="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-hero">
+      <img class="modal-backdrop" id="modal-backdrop" src="" alt="">
+      <div class="modal-hero-info">
+        <img class="modal-poster" id="modal-poster" src="" alt="">
+        <div>
+          <div class="modal-title" id="modal-title"></div>
+          <div class="modal-meta" id="modal-meta"></div>
+          <div class="tmdb-rating" id="modal-tmdb-rating"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="genres" id="modal-genres"></div>
+      <p class="synopsis" id="modal-synopsis"></p>
+
+      <div class="modal-actions" style="margin-bottom:28px">
+        <button class="fav-modal-btn" id="fav-modal-btn" onclick="toggleFavModal()">♡ Favoritar</button>
+      </div>
+
+      <div class="my-rating-section">
+        <h3>Minha Avaliação</h3>
+        <div class="stars-input" id="stars-input">
+          <button class="star-btn" data-v="1" onclick="setStar(1)">★</button>
+          <button class="star-btn" data-v="2" onclick="setStar(2)">★</button>
+          <button class="star-btn" data-v="3" onclick="setStar(3)">★</button>
+          <button class="star-btn" data-v="4" onclick="setStar(4)">★</button>
+          <button class="star-btn" data-v="5" onclick="setStar(5)">★</button>
+        </div>
+        <textarea class="rating-comment" id="rating-comment" placeholder="O que você achou? (opcional)"></textarea>
+        <button class="save-rating-btn" onclick="saveRating()">SALVAR AVALIAÇÃO</button>
+        <div id="saved-rating-display" style="display:none" class="saved-rating-display"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DE LOGIN / CADASTRO -->
+<div class="modal-overlay auth-modal" id="auth-modal-overlay" onclick="closeAuthModalOutside(event)">
+  <div class="modal" id="auth-modal">
+    <button class="modal-close" onclick="closeAuthModal()">✕</button>
+    <div class="auth-body">
+      <div class="auth-tabs">
+        <button class="active" id="auth-tab-login" onclick="switchAuthTab('login')">ENTRAR</button>
+        <button id="auth-tab-register" onclick="switchAuthTab('register')">CRIAR CONTA</button>
+      </div>
+
+      <div id="auth-error" class="auth-error"></div>
+
+      <!-- LOGIN -->
+      <form id="login-form" onsubmit="return handleLogin(event)">
+        <div class="auth-title">Bem-vindo de volta</div>
+        <div class="auth-sub">Entre para acessar seus favoritos e avaliações.</div>
+        <div class="form-field">
+          <label>E-mail</label>
+          <input type="email" id="login-email" required autocomplete="email">
+        </div>
+        <div class="form-field">
+          <label>Senha</label>
+          <input type="password" id="login-password" required autocomplete="current-password">
+        </div>
+        <button type="submit" class="auth-submit" id="login-submit">ENTRAR</button>
+      </form>
+
+      <!-- REGISTER -->
+      <form id="register-form" style="display:none" onsubmit="return handleRegister(event)">
+        <div class="auth-title">Criar sua conta</div>
+        <div class="auth-sub">Leva menos de um minuto.</div>
+        <div class="form-field">
+          <label>Nome</label>
+          <input type="text" id="register-name" required autocomplete="name">
+        </div>
+        <div class="form-field">
+          <label>E-mail</label>
+          <input type="email" id="register-email" required autocomplete="email">
+        </div>
+        <div class="form-field">
+          <label>Senha (mín. 6 caracteres)</label>
+          <input type="password" id="register-password" required minlength="6" autocomplete="new-password">
+        </div>
+        <button type="submit" class="auth-submit" id="register-submit">CRIAR CONTA</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="/js/api.js"></script>
+<script src="/js/auth.js"></script>
+<script src="/js/app.js"></script>
+</body>
+</html>
